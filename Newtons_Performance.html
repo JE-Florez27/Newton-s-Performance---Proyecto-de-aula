@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newton's Performance | Newton-Raphson</title>
+<style>
+:root{--navy:#10233f;--blue:#2563eb;--cyan:#0ea5e9;--bg:#f3f6fb;--ink:#172033;--muted:#64748b;--line:#dbe3ef;--green:#15803d;--red:#b91c1c}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,#10233f,#1d4ed8);color:white;padding:30px 22px}
+.wrap{max-width:1100px;margin:auto}header h1{margin:0 0 8px;font-size:30px}header p{margin:0;color:#dbeafe;line-height:1.5}
+.team{margin-top:10px;color:#e2e8f0;font-size:13px;line-height:1.7}
+main{max-width:1100px;margin:24px auto;padding:0 18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{background:white;border:1px solid var(--line);border-radius:15px;padding:21px;box-shadow:0 5px 18px #1720330b;margin-bottom:18px}
+h2{font-size:18px;margin:0 0 15px;color:var(--navy)}.formula{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center;font-size:18px;font-weight:bold;color:#1e40af;line-height:1.8}
+label{display:block;font-size:13px;font-weight:bold;color:#334155;margin:12px 0 6px}
+input{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;font-size:15px}
+input:focus{outline:2px solid #93c5fd;border-color:var(--blue)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+button{border:0;border-radius:9px;padding:12px 17px;font-size:14px;font-weight:bold;cursor:pointer}
+.primary{background:var(--blue);color:white;width:100%;margin-top:17px}.primary:hover{background:#1d4ed8}
+.secondary{background:#eaf1ff;color:#1d4ed8;margin-top:10px}
+.note{font-size:13px;color:var(--muted);line-height:1.55}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kpi{background:#f8fafc;border:1px solid var(--line);padding:15px;border-radius:10px}
+.kpi span{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}.kpi strong{font-size:22px;color:var(--navy)}
+.status{padding:11px;border-radius:9px;margin-top:12px;font-size:13px;line-height:1.5}
+.ok{background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0}.bad{background:#fef2f2;color:var(--red);border:1px solid #fecaca}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right}th{background:#f1f5f9;color:#334155}th:first-child,td:first-child{text-align:center}
+footer{text-align:center;padding:22px;color:var(--muted);font-size:12px}
+@media(max-width:750px){.grid{grid-template-columns:1fr}.fields{grid-template-columns:1fr 1fr}header h1{font-size:25px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Newton's Performance</h1>
+<p>Estimación de usuarios concurrentes mediante el método numérico de Newton-Raphson.</p>
+<div class="team"><div>Juan Esteban Florez Tavera - 01240371022</div><div>Maria José Herrera Bonilla - 01240371044</div></div>
+</div></header>
+<main>
+<div class="grid">
+<section class="card">
+<h2>1. Parámetros del modelo</h2>
+<p class="note">Ingresa los valores del modelo de tiempo de respuesta. Para comenzar, puedes usar los valores de ejemplo.</p>
+<div class="fields">
+<div><label for="a">Parámetro a</label><input id="a" type="number" step="any" value="0.2"></div>
+<div><label for="b">Parámetro b</label><input id="b" type="number" step="any" value="0.01"></div>
+<div><label for="c">Parámetro c</label><input id="c" type="number" step="any" value="0.5"></div>
+<div><label for="k">Capacidad teórica K</label><input id="k" type="number" step="any" value="100"></div>
+<div><label for="rmax">Tiempo máximo (segundos)</label><input id="rmax" type="number" step="any" value="2"></div>
+<div><label for="n0">Valor inicial n₀</label><input id="n0" type="number" step="any" value="50"></div>
+<div><label for="tol">Tolerancia</label><input id="tol" type="number" step="any" value="0.000001"></div>
+<div><label for="maxit">Máximo de iteraciones</label><input id="maxit" type="number" step="1" value="50"></div>
+</div>
+<button class="primary" onclick="calcular()">Calcular con Newton-Raphson</button>
+<button class="secondary" onclick="restablecer()">Restablecer ejemplo</button>
+</section>
+<section class="card">
+<h2>2. Modelo matemático</h2>
+<div class="formula">R(n) = a + b·n + c·n² / (K − n)</div>
+<p class="note">La función que buscamos igualar a cero es:</p>
+<div class="formula">f(n) = R(n) − Rmáx</div>
+<p class="note">Derivada utilizada:</p>
+<div class="formula">f′(n) = b + c(2nK − n²) / (K − n)²</div>
+<p class="note">Newton-Raphson actualiza la aproximación usando n siguiente = n actual − f(n) / f′(n).</p>
+<div class="status ok">Importante: los parámetros iniciales son hipotéticos. Para estimar un sistema real, deben ajustarse con mediciones obtenidas mediante pruebas de carga autorizadas.</div>
+</section>
+</div>
+<section class="card">
+<h2>3. Resultado</h2>
+<div class="kpis">
+<div class="kpi"><span>Raíz aproximada</span><strong id="root">—</strong></div>
+<div class="kpi"><span>Usuarios concurrentes estimados</span><strong id="users">—</strong></div>
+<div class="kpi"><span>Iteraciones realizadas</span><strong id="iterations">—</strong></div>
+<div class="kpi"><span>Error final |nᵢ₊₁ − nᵢ|</span><strong id="error">—</strong></div>
+</div>
+<div id="message" class="status" style="display:none"></div>
+</section>
+<section class="card">
+<h2>4. Tabla de iteraciones</h2>
+<p class="note">La tabla permite observar cómo se aproxima el método a la raíz de la función.</p>
+<div class="table-wrap">
+<table><thead><tr><th>i</th><th>n actual</th><th>f(n)</th><th>f′(n)</th><th>n siguiente</th><th>Error</th></tr></thead>
+<tbody id="rows"><tr><td colspan="6" style="text-align:center;color:#64748b">Ejecuta el cálculo para ver las iteraciones.</td></tr></tbody></table>
+</div>
+</section>
+</main>
+<footer>Proyecto académico de Métodos Numéricos · Ingeniería de Software</footer>
+<script>
+const $ = id => document.getElementById(id);
+function numero(id){return Number($(id).value)}
+function formato(x){return Number(x).toLocaleString('es-CO',{maximumFractionDigits:10})}
+function calcular(){
+ const a=numero('a'), b=numero('b'), c=numero('c'), K=numero('k');
+ const R=numero('rmax'), n0=numero('n0'), tol=numero('tol'), maxit=numero('maxit');
+ const vals=[a,b,c,K,R,n0,tol,maxit];
+ if(vals.some(v=>!Number.isFinite(v)) || a<=0 || b<=0 || c<=0 || K<=0 || R<=a || n0<=0 || n0>=K || tol<=0 || !Number.isInteger(maxit) || maxit<1){
+   return mostrarError('Revisa los datos: a, b, c y K deben ser positivos; Rmáx debe ser mayor que a; n₀ debe estar entre 0 y K; la tolerancia y las iteraciones deben ser positivas.');
+ }
+ const f=n=>a+b*n+(c*n*n)/(K-n)-R;
+ const df=n=>b+c*(2*n*K-n*n)/Math.pow(K-n,2);
+ let n=n0, data=[], convergio=false, error=Infinity;
+ for(let i=0;i<maxit;i++){
+   if(!(n>0 && n<K)) return mostrarError('El método salió del dominio permitido (0 < n < K). Prueba otro valor inicial.');
+   const fn=f(n), derivada=df(n);
+   if(!Number.isFinite(fn)||!Number.isFinite(derivada)||Math.abs(derivada)<1e-12) return mostrarError('No se puede continuar: la derivada es cero o demasiado pequeña.');
+   const siguiente=n-fn/derivada;
+   error=Math.abs(siguiente-n);
+   data.push({i,n,fn,derivada,siguiente,error});
+   if(!Number.isFinite(siguiente)||!(siguiente>0 && siguiente<K)) return mostrarError('La nueva aproximación salió del dominio del modelo. Prueba otro valor inicial.');
+   n=siguiente;
+   if(error<tol){convergio=true;break;}
+ }
+ $('rows').innerHTML=data.map(x=>`<tr><td>${x.i}</td><td>${formato(x.n)}</td><td>${formato(x.fn)}</td><td>${formato(x.derivada)}</td><td>${formato(x.siguiente)}</td><td>${formato(x.error)}</td></tr>`).join('');
+ $('root').textContent=formato(n);
+ $('users').textContent=Math.floor(n).toLocaleString('es-CO')+' usuarios';
+ $('iterations').textContent=data.length;
+ $('error').textContent=formato(error);
+ const msg=$('message'); msg.style.display='block';
+ msg.className='status '+(convergio?'ok':'bad');
+ msg.textContent=convergio
+ ? `Convergencia alcanzada. La raíz aproximada es ${formato(n)}. Según el modelo, se estiman ${Math.floor(n)} usuarios completos antes de alcanzar el tiempo máximo de respuesta.`
+ : 'Se alcanzó el máximo de iteraciones sin llegar a la tolerancia indicada. El resultado debe revisarse; prueba otro valor inicial o más iteraciones.';
+}
+function mostrarError(t){
+ $('message').style.display='block';$('message').className='status bad';$('message').textContent=t;
+ $('root').textContent='—';$('users').textContent='—';$('iterations').textContent='—';$('error').textContent='—';
+ $('rows').innerHTML='<tr><td colspan="6" style="text-align:center">No hay iteraciones para mostrar.</td></tr>';
+}
+function restablecer(){
+ const valores={a:0.2,b:0.01,c:0.5,k:100,rmax:2,n0:50,tol:0.000001,maxit:50};
+ Object.entries(valores).forEach(([id,v])=>$(id).value=v);
+ $('message').style.display='none';$('root').textContent='—';$('users').textContent='—';$('iterations').textContent='—';$('error').textContent='—';
+ $('rows').innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b">Ejecuta el cálculo para ver las iteraciones.</td></tr>';
+}
+</script>
+</body>
+</html>
